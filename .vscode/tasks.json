@@ -1,0 +1,87 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Flutter Run",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"run"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$flutter"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Flutter Run",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"run"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build Test Player 2",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"build",
+				"windows",
+				"--release",
+				"-t",
+				"lib/main_test.dart",
+				"--dart-define=TEST_PLAYER=2",
+				"--dart-define=TEST_EMAIL=dan_zarwell@hamacher.com",
+				"--dart-define=TEST_PASSWORD=Stoopid100$"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "silent",
+				"panel": "dedicated",
+				"group": "test-players"
+			}
+		},
+		{
+			"label": "Start Test Player 2",
+			"type": "shell",
+			"command": "Start-Process",
+			"args": [
+				"\"${workspaceFolder}\\build\\windows\\x64\\runner\\Release\\nine_mens_morris.exe\""
+			],
+			"isBackground": true,
+			"dependsOn": "Build Test Player 2",
+			"problemMatcher": {
+				"pattern": {
+					"regexp": "^never_match_this$",
+					"file": 1,
+					"message": 2
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": ".",
+					"endsPattern": "."
+				}
+			},
+			"presentation": {
+				"reveal": "silent",
+				"panel": "dedicated",
+				"group": "test-players"
+			}
+		},
+		{
+			"label": "Add bot flag to profiles table",
+			"type": "shell",
+			"command": "psql",
+			"args": [
+				"-c",
+				"ALTER TABLE profiles ADD COLUMN is_bot BOOLEAN DEFAULT FALSE;"
+			],
+			"isBackground": false
+		}
+	]
+}

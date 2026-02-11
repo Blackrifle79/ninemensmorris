@@ -1,0 +1,49 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Normal Launch",
+			"type": "dart",
+			"request": "launch",
+			"program": "lib/main.dart",
+			"flutterMode": "debug"
+		},
+		{
+			"name": "Test Player 1",
+			"type": "dart",
+			"request": "launch",
+			"program": "lib/main_test.dart",
+			"flutterMode": "debug",
+			"toolArgs": [
+				"--dart-define=TEST_PLAYER=1",
+				"--dart-define=TEST_EMAIL=danzarwell@gmail.com",
+				"--dart-define=TEST_PASSWORD=Stoopid100$"
+			]
+		},
+		{
+			"name": "Test Player 2",
+			"type": "dart",
+			"request": "launch",
+			"program": "lib/main_test.dart",
+			"flutterMode": "debug",
+			"toolArgs": [
+				"--dart-define=TEST_PLAYER=2",
+				"--dart-define=TEST_EMAIL=dan_zarwell@hamacher.com",
+				"--dart-define=TEST_PASSWORD=Stoopid100$"
+			]
+		},
+		{
+			"name": "Online Test (Dual)",
+			"type": "dart",
+			"request": "launch",
+			"program": "lib/main_test.dart",
+			"flutterMode": "debug",
+			"preLaunchTask": "Start Test Player 2",
+			"toolArgs": [
+				"--dart-define=TEST_PLAYER=1",
+				"--dart-define=TEST_EMAIL=danzarwell@gmail.com",
+				"--dart-define=TEST_PASSWORD=Stoopid100$"
+			]
+		}
+	]
+}

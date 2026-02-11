@@ -1,0 +1,15 @@
+{
+  "name": "bot_manager",
+  "version": "1.0.0",
+  "description": "Bot manager for Nine Men's Morris online matchmaking",
+  "main": "bot_manager.js",
+  "scripts": {
+    "start": "node bot_manager.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1",
+    "node-cron": "^3.0.3",
+    "uuid": "^13.0.0"
+  }
+}
