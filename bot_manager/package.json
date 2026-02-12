@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Bot manager for Nine Men's Morris online matchmaking",
   "main": "bot_manager.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node bot_manager.js"
   },

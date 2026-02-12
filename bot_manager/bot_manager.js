@@ -94,8 +94,8 @@ async function ensureLeaderboard(bot) {
     online_games: games,
     offline_score: 0,
     offline_games: 0,
-    score: 0,
-    avg_score: 0,
+    score: 50,
+    avg_score: 50,
     games_played: games,
     wins,
     losses,
@@ -282,8 +282,13 @@ async function updateBotLeaderboard(winnerId, loserId, isDraw, bot1Id, bot2Id) {
         if (entry) {
           const newGames = (entry.online_games || 0) + 1;
           const newDraws = (entry.draws || 0) + 1;
-          // Slight score adjustment for draws
-          const newScore = Math.max(0, Math.min(100, (entry.online_score || 50) - 0.5));
+          // ELO for draw: expected score calculation
+          const opponentRating = 50; // Draw scenario - assume equal opponent
+          const expectedScore = 1.0 / (1.0 + Math.pow(10, (opponentRating - (entry.avg_score || 50)) / 25));
+          const actualScore = 0.5; // Draw
+          const kFactor = 3.2; // Scaled K factor for 0-100 range
+          const ratingChange = kFactor * (actualScore - expectedScore);
+          const newAvgScore = Math.max(0, Math.min(100, (entry.avg_score || 50) + ratingChange));
 
           await supabase
             .from('leaderboard')
@@ -291,13 +296,14 @@ async function updateBotLeaderboard(winnerId, loserId, isDraw, bot1Id, bot2Id) {
               online_games: newGames,
               games_played: newGames,
               draws: newDraws,
-              online_score: parseFloat(newScore.toFixed(1)),
+              avg_score: parseFloat(newAvgScore.toFixed(1)),
+              score: Math.round(newAvgScore), // legacy column
             })
             .eq('id', botId);
         }
       }
     } else if (winnerId && loserId) {
-      // Winner gains points, loser loses points
+      // Winner gains rating, loser loses rating (ELO system)
       const { data: winnerEntry } = await supabase
         .from('leaderboard')
         .select('*')
@@ -313,10 +319,14 @@ async function updateBotLeaderboard(winnerId, loserId, isDraw, bot1Id, bot2Id) {
       if (winnerEntry) {
         const newGames = (winnerEntry.online_games || 0) + 1;
         const newWins = (winnerEntry.wins || 0) + 1;
-        // ELO-like scoring: gain more for beating higher-rated opponents
-        const scoreDiff = ((loserEntry?.online_score || 50) - (winnerEntry.online_score || 50)) / 25;
-        const scoreGain = 3 + Math.max(0, scoreDiff);
-        const newScore = Math.min(100, (winnerEntry.online_score || 50) + scoreGain);
+        
+        // ELO calculation for winner
+        const winnerRating = winnerEntry.avg_score || 50;
+        const loserRating = loserEntry?.avg_score || 50;
+        const expectedScore = 1.0 / (1.0 + Math.pow(10, (loserRating - winnerRating) / 25));
+        const kFactor = 3.2; // Scaled K factor for 0-100 range
+        const ratingChange = kFactor * (1.0 - expectedScore); // actualScore = 1 for win
+        const newAvgScore = Math.min(100, winnerRating + ratingChange);
 
         await supabase
           .from('leaderboard')
@@ -324,7 +334,8 @@ async function updateBotLeaderboard(winnerId, loserId, isDraw, bot1Id, bot2Id) {
             online_games: newGames,
             games_played: newGames,
             wins: newWins,
-            online_score: parseFloat(newScore.toFixed(1)),
+            avg_score: parseFloat(newAvgScore.toFixed(1)),
+            score: Math.round(newAvgScore), // legacy column
           })
           .eq('id', winnerId);
       }
@@ -332,10 +343,14 @@ async function updateBotLeaderboard(winnerId, loserId, isDraw, bot1Id, bot2Id) {
       if (loserEntry) {
         const newGames = (loserEntry.online_games || 0) + 1;
         const newLosses = (loserEntry.losses || 0) + 1;
-        // Lose less for losing to higher-rated opponents
-        const scoreDiff = ((winnerEntry?.online_score || 50) - (loserEntry.online_score || 50)) / 25;
-        const scoreLoss = 3 - Math.min(2, scoreDiff);
-        const newScore = Math.max(0, (loserEntry.online_score || 50) - scoreLoss);
+        
+        // ELO calculation for loser
+        const loserRating = loserEntry.avg_score || 50;
+        const winnerRating = winnerEntry?.avg_score || 50;
+        const expectedScore = 1.0 / (1.0 + Math.pow(10, (winnerRating - loserRating) / 25));
+        const kFactor = 3.2; // Scaled K factor for 0-100 range
+        const ratingChange = kFactor * (0.0 - expectedScore); // actualScore = 0 for loss
+        const newAvgScore = Math.max(0, loserRating + ratingChange);
 
         await supabase
           .from('leaderboard')
@@ -343,7 +358,8 @@ async function updateBotLeaderboard(winnerId, loserId, isDraw, bot1Id, bot2Id) {
             online_games: newGames,
             games_played: newGames,
             losses: newLosses,
-            online_score: parseFloat(newScore.toFixed(1)),
+            avg_score: parseFloat(newAvgScore.toFixed(1)),
+            score: Math.round(newAvgScore), // legacy column
           })
           .eq('id', loserId);
       }
