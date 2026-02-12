@@ -161,35 +161,84 @@
         const messageDiv = document.getElementById('message');
         const submitBtn = document.getElementById('submitBtn');
         
+        let recoveryReady = false;
+        
         function showMessage(text, isError = false) {
             messageDiv.textContent = text;
             messageDiv.className = 'message ' + (isError ? 'error' : 'success');
         }
         
+        // Disable form until recovery session is established
+        submitBtn.disabled = true;
+        
+        // Listen for Supabase auth events — this handles both
+        // PKCE flow (?code=xxx) and implicit flow (#access_token=xxx)
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('Auth event:', event);
+            if (event === 'PASSWORD_RECOVERY') {
+                recoveryReady = true;
+                submitBtn.disabled = false;
+                showMessage('Enter your new password below.', false);
+            } else if (event === 'SIGNED_IN' && !recoveryReady) {
+                // Some Supabase versions fire SIGNED_IN instead of PASSWORD_RECOVERY
+                recoveryReady = true;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Also try manual token exchange for PKCE flow (code in query string)
         async function init() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            
+            if (code) {
+                // PKCE flow: exchange the code for a session
+                const { error } = await supabase.auth.exchangeCodeForSession(code);
+                if (error) {
+                    showMessage('Invalid or expired reset link. Please request a new one.', true);
+                    submitBtn.disabled = true;
+                    return;
+                }
+                // onAuthStateChange should fire PASSWORD_RECOVERY after this
+                return;
+            }
+            
+            // Fallback: check for hash fragment (implicit flow)
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             const accessToken = hashParams.get('access_token');
             const type = hashParams.get('type');
             
-            if (type !== 'recovery' || !accessToken) {
-                showMessage('Invalid or expired reset link. Please request a new one.', true);
-                submitBtn.disabled = true;
+            if (type === 'recovery' && accessToken) {
+                const { error } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: hashParams.get('refresh_token') || ''
+                });
+                if (error) {
+                    showMessage('Invalid or expired reset link. Please request a new one.', true);
+                    submitBtn.disabled = true;
+                    return;
+                }
+                recoveryReady = true;
+                submitBtn.disabled = false;
                 return;
             }
             
-            const { error } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: hashParams.get('refresh_token') || ''
-            });
-            
-            if (error) {
-                showMessage('Invalid or expired reset link. Please request a new one.', true);
-                submitBtn.disabled = true;
-            }
+            // No token found at all — wait a moment for onAuthStateChange
+            setTimeout(() => {
+                if (!recoveryReady) {
+                    showMessage('Invalid or expired reset link. Please request a new one.', true);
+                    submitBtn.disabled = true;
+                }
+            }, 3000);
         }
         
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            if (!recoveryReady) {
+                showMessage('Session not ready. Please wait or request a new reset link.', true);
+                return;
+            }
             
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
@@ -207,15 +256,21 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Updating...';
             
-            const { error } = await supabase.auth.updateUser({ password });
-            
-            if (error) {
-                showMessage('Error: ' + error.message, true);
+            try {
+                const { error } = await supabase.auth.updateUser({ password });
+                
+                if (error) {
+                    showMessage('Error: ' + error.message, true);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Update Password';
+                } else {
+                    showMessage('Password updated! You can now sign in with your new password.');
+                    form.style.display = 'none';
+                }
+            } catch (err) {
+                showMessage('Error: ' + err.message, true);
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Update Password';
-            } else {
-                showMessage('Password updated! You can now sign in with your new password.');
-                form.style.display = 'none';
             }
         });
         
