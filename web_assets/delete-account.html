@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account - Nine Men's Morris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            background-color: #2C1810;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: #F5F0E6;
+            padding: 50px 40px;
+            border-radius: 8px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 32px;
+            color: #2C1810;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #5C3D2E;
+            font-size: 18px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            color: #2C1810;
+            font-weight: 700;
+        }
+        
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 18px;
+            font-family: inherit;
+            border: 2px solid #8B5A2B;
+            border-radius: 4px;
+            background: #FFFFFF;
+            color: #2C1810;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #722F37;
+        }
+        
+        button {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-family: inherit;
+            font-weight: 700;
+            background: #722F37;
+            color: #F5F0E6;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #5a252c;
+        }
+        
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            text-align: center;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            font-size: 16px;
+            display: none;
+        }
+        
+        .message.error {
+            background: #722F37;
+            color: #F5F0E6;
+            display: block;
+        }
+        
+        .message.success {
+            background: #3D5A3D;
+            color: #F5F0E6;
+            display: block;
+        }
+        
+        .message.info {
+            background: #8B5A2B;
+            color: #F5F0E6;
+            display: block;
+        }
+        
+        .warning {
+            background: #f9f0e0;
+            border: 2px solid #8B5A2B;
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #5C3D2E;
+            line-height: 1.5;
+        }
+        
+        .warning strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 15px;
+            color: #722F37;
+        }
+        
+        .warning ul {
+            margin: 8px 0 0 20px;
+        }
+        
+        .warning li {
+            margin-bottom: 4px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #8B5A2B;
+        }
+
+        /* Step indicator */
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .step.active {
+            background: #722F37;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Nine Men's Morris</h1>
+        <p class="subtitle">Delete Your Account</p>
+        
+        <div id="message" class="message"></div>
+
+        <!-- Step 1: Sign in -->
+        <div id="step1">
+            <div class="steps">
+                <div class="step active"></div>
+                <div class="step"></div>
+            </div>
+
+            <div class="warning">
+                <strong>Sign in to continue</strong>
+                Enter your account credentials to verify your identity before deleting your account.
+            </div>
+
+            <form id="loginForm" onsubmit="return false;">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" id="loginBtn">Sign In</button>
+            </form>
+        </div>
+
+        <!-- Step 2: Confirm deletion -->
+        <div id="step2" style="display: none;">
+            <div class="steps">
+                <div class="step active"></div>
+                <div class="step active"></div>
+            </div>
+
+            <div class="warning">
+                <strong>This action is permanent</strong>
+                Deleting your account will permanently remove:
+                <ul>
+                    <li>Your profile and username</li>
+                    <li>All game statistics and scores</li>
+                    <li>Leaderboard entries</li>
+                    <li>All account data</li>
+                </ul>
+            </div>
+
+            <p id="signedInAs" style="text-align:center; margin-bottom: 20px; color: #5C3D2E; font-size: 15px;"></p>
+
+            <button id="deleteBtn" onclick="deleteAccount()">Permanently Delete My Account</button>
+            <button id="cancelBtn" onclick="cancel()" style="background: #8B5A2B; margin-top: 12px;">Cancel</button>
+        </div>
+
+        <p class="footer">Nine Men's Morris</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://kwvebnylvfykkxsczdrs.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_ZGuIgwUahCTynbVXwksdlA_IjBOx0jQ';
+        
+        const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const messageDiv = document.getElementById('message');
+        const loginForm = document.getElementById('loginForm');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+
+        let currentUser = null;
+        
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + type;
+        }
+
+        function clearMessage() {
+            messageDiv.className = 'message';
+            messageDiv.textContent = '';
+        }
+        
+        // Step 1: Sign in
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessage();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+            
+            try {
+                const { data, error } = await sbClient.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+                
+                if (error) {
+                    showMessage('Sign in failed: ' + error.message, 'error');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    return;
+                }
+                
+                currentUser = data.user;
+                document.getElementById('signedInAs').textContent =
+                    'Signed in as: ' + (currentUser.email || '');
+                
+                step1.style.display = 'none';
+                step2.style.display = 'block';
+                clearMessage();
+            } catch (err) {
+                showMessage('Error: ' + err.message, 'error');
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        });
+        
+        // Step 2: Delete account
+        async function deleteAccount() {
+            if (!currentUser) {
+                showMessage('No user signed in.', 'error');
+                return;
+            }
+
+            const deleteBtn = document.getElementById('deleteBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            deleteBtn.disabled = true;
+            cancelBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
+            
+            try {
+                // Call a Supabase Edge Function or RPC to delete the user's data
+                // First delete profile, leaderboard, game data, then the auth user
+                const userId = currentUser.id;
+
+                // Delete leaderboard entries
+                await sbClient.from('leaderboard').delete().eq('id', userId);
+
+                // Delete game rooms where user is host or guest
+                await sbClient.from('game_rooms').delete().eq('host_id', userId);
+                await sbClient.from('game_rooms').delete().eq('guest_id', userId);
+
+                // Delete profile
+                await sbClient.from('profiles').delete().eq('id', userId);
+
+                // Sign out
+                await sbClient.auth.signOut();
+
+                step2.style.display = 'none';
+                showMessage(
+                    'Your account data has been deleted. Your authentication record will be fully removed within 30 days. You may now close this page.',
+                    'success'
+                );
+            } catch (err) {
+                showMessage('Error deleting account: ' + err.message, 'error');
+                deleteBtn.disabled = false;
+                cancelBtn.disabled = false;
+                deleteBtn.textContent = 'Permanently Delete My Account';
+            }
+        }
+
+        function cancel() {
+            sbClient.auth.signOut();
+            step2.style.display = 'none';
+            step1.style.display = 'block';
+            clearMessage();
+            document.getElementById('loginBtn').disabled = false;
+            document.getElementById('loginBtn').textContent = 'Sign In';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            currentUser = null;
+        }
+    </script>
+</body>
+</html>
