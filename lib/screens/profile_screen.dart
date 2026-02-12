@@ -129,11 +129,116 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _showMessage('No email available for password reset.');
       return;
     }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 340),
+          padding: const EdgeInsets.all(24),
+          decoration: AppStyles.dialogDecoration,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.mail_outline,
+                size: 48,
+                color: AppStyles.darkBrown,
+              ),
+              const SizedBox(height: 16),
+              const Text('Reset Password', style: AppStyles.headingMedium),
+              const SizedBox(height: 12),
+              Text(
+                'Send password reset link to:',
+                style: AppStyles.bodyText,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _email,
+                style: AppStyles.bodyTextBold,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    style: AppStyles.primaryButtonStyle,
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    style: AppStyles.primaryButtonStyle,
+                    child: const Text('Send Link'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     setState(() => _isLoading = true);
     final auth = AuthService();
     final result = await auth.resetPassword(_email);
     setState(() => _isLoading = false);
-    _showMessage(result.message);
+
+    if (!mounted) return;
+
+    // Show result dialog
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 340),
+          padding: const EdgeInsets.all(24),
+          decoration: AppStyles.dialogDecoration,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                result.isSuccess
+                    ? Icons.check_circle_outline
+                    : Icons.error_outline,
+                size: 48,
+                color: result.isSuccess ? Colors.green[700] : Colors.red[700],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                result.isSuccess ? 'Email Sent!' : 'Error',
+                style: AppStyles.headingMedium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                result.isSuccess
+                    ? 'Check your inbox for a password reset link. It may take a few minutes to arrive.'
+                    : result.message,
+                style: AppStyles.bodyText,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: AppStyles.primaryButtonStyle,
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _signOut() async {
@@ -210,6 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         foregroundColor: AppStyles.cream,
         iconTheme: const IconThemeData(color: AppStyles.cream),
+        centerTitle: true,
         title: const Text('My Profile', style: AppStyles.headingMediumLight),
       ),
       body: Stack(

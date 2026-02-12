@@ -1882,6 +1882,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         elevation: 0,
         foregroundColor: AppStyles.cream,
         iconTheme: const IconThemeData(color: AppStyles.cream),
+        centerTitle: true,
         title: const Text('Training Mode', style: AppStyles.headingMediumLight),
         leading: Builder(
           builder: (context) => IconButton(
@@ -2077,11 +2078,11 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   right: 0,
                   bottom: 0,
                   child: Container(
-                    padding: const EdgeInsets.only(
+                    padding: EdgeInsets.only(
                       left: 16,
                       right: 16,
                       top: 16,
-                      bottom: 24,
+                      bottom: 24 + MediaQuery.of(context).padding.bottom,
                     ),
                     decoration: BoxDecoration(
                       color: AppStyles.burgundy.withValues(alpha: 0.8),

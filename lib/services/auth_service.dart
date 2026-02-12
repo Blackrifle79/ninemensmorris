@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../config/supabase_config.dart';
@@ -78,7 +79,7 @@ class AuthService {
         'Google sign-in is only available on Android and iOS. Please use email sign-in.',
       );
     }
-    
+
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email'],
@@ -90,7 +91,8 @@ class AuthService {
         return AuthResult.failure('Google sign-in cancelled');
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
         return AuthResult.failure(
@@ -109,6 +111,11 @@ class AuthService {
       } else {
         return AuthResult.failure('Failed to sign in with Google');
       }
+    } on PlatformException catch (e) {
+      // Platform-specific error - usually SHA-1/package name misconfiguration
+      return AuthResult.failure(
+        'Google sign-in configuration error: ${e.code} - ${e.message}',
+      );
     } catch (e) {
       return AuthResult.failure('Google sign-in failed: ${e.toString()}');
     }

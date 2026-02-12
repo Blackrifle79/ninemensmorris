@@ -49,7 +49,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         if (_showAroundMe && myRank != null) {
           // Fetch players around me
           entries = await _service.fetchAroundPlayer(user.id, range: 10);
-          
+
           // Find my entry in the list
           final idx = entries.indexWhere((e) => e.id == user.id);
           if (idx >= 0) {
@@ -104,6 +104,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         elevation: 0,
         foregroundColor: AppStyles.cream,
         iconTheme: const IconThemeData(color: AppStyles.cream),
+        centerTitle: true,
         title: const Text('Leaderboard', style: AppStyles.headingMediumLight),
         actions: [
           IconButton(
@@ -187,7 +188,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         : ListView.builder(
                             padding: const EdgeInsets.all(16),
                             itemCount: _showAroundMe
-                                ? _entries.length + 1  // +1 for toggle button
+                                ? _entries.length +
+                                      1 // +1 for toggle button
                                 : _entries.length + (_myEntry != null ? 1 : 0),
                             itemBuilder: (context, index) {
                               // In around-me mode, show toggle button first
@@ -198,10 +200,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                                 final entryIndex = index - 1;
                                 final e = _entries[entryIndex];
                                 final rank = _aroundMeStartRank + entryIndex;
-                                final isMe = e.id == AuthService().currentUser?.id;
-                                return _buildLeaderboardTile(e, rank, highlight: isMe);
+                                final isMe =
+                                    e.id == AuthService().currentUser?.id;
+                                return _buildLeaderboardTile(
+                                  e,
+                                  rank,
+                                  highlight: isMe,
+                                );
                               }
-                              
+
                               // In leaders mode, show player's tile at the top
                               if (_myEntry != null && index == 0) {
                                 return _buildMyTile();
@@ -233,7 +240,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(color: AppStyles.cream.withValues(alpha: 0.85)),
+          decoration: BoxDecoration(
+            color: AppStyles.cream.withValues(alpha: 0.85),
+          ),
           child: Row(
             children: [
               // Rank
@@ -280,9 +289,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   ],
                 ),
               ),
-              // Online Average Score
+              // ELO Rating Score
               Text(
-                e.onlineScore > 0 ? e.onlineScore.toStringAsFixed(1) : 'N/A',
+                e.avgScore > 0 ? e.avgScore.toStringAsFixed(1) : 'N/A',
                 style: const TextStyle(
                   fontFamily: AppStyles.fontBody,
                   fontSize: 20,
@@ -380,12 +389,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   /// Build a standard leaderboard tile
-  Widget _buildLeaderboardTile(LeaderboardEntry e, int rank, {bool highlight = false}) {
+  Widget _buildLeaderboardTile(
+    LeaderboardEntry e,
+    int rank, {
+    bool highlight = false,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: highlight 
+        color: highlight
             ? AppStyles.cream.withValues(alpha: 0.85)
             : AppStyles.surface.withValues(alpha: 0.85),
       ),
@@ -425,19 +438,23 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               children: [
                 Text(
                   e.username.isNotEmpty ? e.username : 'Player',
-                  style: highlight ? AppStyles.bodyTextBold : AppStyles.bodyTextBoldLight,
+                  style: highlight
+                      ? AppStyles.bodyTextBold
+                      : AppStyles.bodyTextBoldLight,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${e.onlineGames} online game${e.onlineGames == 1 ? '' : 's'}',
-                  style: highlight ? AppStyles.labelText : AppStyles.labelTextLight,
+                  style: highlight
+                      ? AppStyles.labelText
+                      : AppStyles.labelTextLight,
                 ),
               ],
             ),
           ),
-          // Online Average Score
+          // ELO Rating Score
           Text(
-            e.onlineScore > 0 ? e.onlineScore.toStringAsFixed(1) : 'N/A',
+            e.avgScore > 0 ? e.avgScore.toStringAsFixed(1) : 'N/A',
             style: TextStyle(
               fontFamily: AppStyles.fontBody,
               fontSize: 20,

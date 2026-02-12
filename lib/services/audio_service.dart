@@ -22,6 +22,9 @@ class AudioService {
   final List<String> _songs = [
     'Medieval Tavern - Full.wav',
     'Greensleeves.wav',
+    'Iron Throne.wav',
+    'Medieval Drinking Song.wav',
+    'Pirate Song.wav',
   ];
   int _currentSongIndex = 0;
   final Random _random = Random();

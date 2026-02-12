@@ -17,6 +17,7 @@ class HistoryScreen extends StatelessWidget {
         elevation: 0,
         foregroundColor: AppStyles.cream,
         iconTheme: const IconThemeData(color: AppStyles.cream),
+        centerTitle: true,
         title: const Text('History', style: AppStyles.headingMediumLight),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

@@ -1,3 +1,4 @@
+import 'dart:math' show pow;
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/game_score.dart';
@@ -5,7 +6,7 @@ import '../models/game_score.dart';
 /// Service for computing game scores and persisting them to the leaderboard.
 ///
 /// The leaderboard tracks:
-///   - `avg_score`      — Overall rating (ELO-like, starts at 50, goes up/down)
+///   - `avg_score`      — ELO-like rating (starts at 50, goes up/down based on wins/losses)
 ///   - `online_score`   — Rolling average of online game scores (for performance tab)
 ///   - `offline_score`  — Rolling average of offline game scores (for performance tab)
 ///   - `games_played`   — Total online games (used for ranking)
@@ -19,8 +20,13 @@ class ScoringService {
 
   SupabaseClient get _client => Supabase.instance.client;
 
-  // Rating adjustment factor - how much ratings change per game
-  static const double _ratingK = 0.3;
+  // ELO K-factor: how much ratings change per game
+  // Higher = more volatile, lower = more stable
+  static const double _kFactor = 32.0;
+
+  // Scale factor for expected score calculation
+  // In chess ELO it's 400, but our ratings are 0-100 so we use 25
+  static const double _eloScale = 25.0;
 
   // ── Compute a GameScore from raw match data ─────────────────
 
@@ -117,6 +123,41 @@ class ScoringService {
 
   // ── Persist score to leaderboard ────────────────────────────
 
+  /// Calculate ELO rating change based on outcome and opponent strength.
+  /// Returns the new rating.
+  double _calculateEloRating({
+    required double playerRating,
+    required double opponentRating,
+    required String outcome,
+  }) {
+    // Calculate expected score (probability of winning) using ELO formula
+    // E = 1 / (1 + 10^((opponentRating - playerRating) / scale))
+    final ratingDiff = opponentRating - playerRating;
+    final expectedScore = 1.0 / (1.0 + pow(10.0, ratingDiff / _eloScale));
+
+    // Actual score: 1 for win, 0.5 for draw, 0 for loss
+    double actualScore;
+    switch (outcome) {
+      case 'win':
+        actualScore = 1.0;
+        break;
+      case 'draw':
+        actualScore = 0.5;
+        break;
+      case 'loss':
+      default:
+        actualScore = 0.0;
+        break;
+    }
+
+    // ELO formula: newRating = oldRating + K * (actualScore - expectedScore)
+    // Scale K factor based on our 0-100 rating range (vs standard 0-3000)
+    final scaledK = _kFactor / 100.0 * 10.0; // Roughly 3.2 points max change
+    final change = scaledK * (actualScore - expectedScore);
+
+    return (playerRating + change).clamp(0.0, 100.0);
+  }
+
   /// Record a [GameScore] for [playerId], updating their ratings.
   /// Returns a map with 'oldRating' and 'newRating' for display.
   Future<Map<String, double>> recordScore({
@@ -138,17 +179,19 @@ class ScoringService {
       final isWin = score.outcome == 'win';
       final isLoss = score.outcome == 'loss';
       final isDraw = score.outcome == 'draw';
-      final gameScore = score.totalScore;
+      final gameScore = score.totalScore; // Individual game performance score
 
       if (existing == null) {
         // ── First game ever — insert ──
         oldRating = 50.0;
 
-        // Only online games affect the overall rating
+        // Calculate ELO rating change (only for online games)
         if (isOnline) {
-          // Rating change based on game score deviation from 50
-          final change = (gameScore - 50) * _ratingK;
-          newRating = (oldRating + change).clamp(0.0, 100.0);
+          newRating = _calculateEloRating(
+            playerRating: oldRating,
+            opponentRating: score.opponentRating,
+            outcome: score.outcome,
+          );
         } else {
           newRating = 50.0;
         }
@@ -157,11 +200,11 @@ class ScoringService {
           'id': playerId,
           'username': username,
           'score': newRating.round(), // legacy column
-          'avg_score': newRating, // Overall rating (ELO-like)
+          'avg_score': newRating, // Overall ELO rating
           'games_played': isOnline ? 1 : 0,
           'online_score': isOnline
               ? gameScore.toDouble()
-              : 50.0, // Avg of game scores
+              : 50.0, // Avg of game performance scores
           'online_games': isOnline ? 1 : 0,
           'offline_score': !isOnline ? gameScore.toDouble() : 50.0,
           'offline_games': !isOnline ? 1 : 0,
@@ -176,10 +219,13 @@ class ScoringService {
         // ── Update existing record ──
         oldRating = _toDouble(existing['avg_score'], 50.0);
 
-        // Calculate new overall rating (ELO-like, only for online games)
+        // Calculate new ELO rating (only for online games)
         if (isOnline) {
-          final change = (gameScore - 50) * _ratingK;
-          newRating = (oldRating + change).clamp(0.0, 100.0);
+          newRating = _calculateEloRating(
+            playerRating: oldRating,
+            opponentRating: score.opponentRating,
+            outcome: score.outcome,
+          );
         } else {
           newRating = oldRating; // Offline games don't affect overall rating
         }

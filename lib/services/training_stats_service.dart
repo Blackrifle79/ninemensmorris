@@ -1,5 +1,4 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'auth_service.dart';
 
 /// Service to track and persist all-time training mode statistics
 class TrainingStatsService {
@@ -19,9 +18,8 @@ class TrainingStatsService {
   static const String _keyCurrentStreak = 'training_current_streak';
   static const String _keyBestStreak = 'training_best_streak';
 
-  String get _userPrefix => _currentUserId ?? 'guest';
-
-  String _getKey(String key) => '${_userPrefix}_$key';
+  // Training stats are local-only, so use a fixed prefix
+  String _getKey(String key) => 'local_$key';
 
   int _totalPuzzles = 0;
   int _totalScore = 0;
@@ -35,7 +33,6 @@ class TrainingStatsService {
   int _bestStreak = 0;
 
   bool _isInitialized = false;
-  String? _currentUserId;
 
   // Getters
   int get totalPuzzles => _totalPuzzles;
@@ -54,16 +51,7 @@ class TrainingStatsService {
 
   /// Initialize the service and load saved stats
   Future<void> init() async {
-    final currentUserId = AuthService().currentUser?.id ?? 'guest';
-
-    // Always reload if user changed
-    if (_currentUserId != currentUserId) {
-      _isInitialized = false;
-    }
-
     if (_isInitialized) return;
-
-    _currentUserId = currentUserId;
 
     final prefs = await SharedPreferences.getInstance();
     _totalPuzzles = prefs.getInt(_getKey(_keyTotalPuzzles)) ?? 0;
@@ -78,19 +66,6 @@ class TrainingStatsService {
     _bestStreak = prefs.getInt(_getKey(_keyBestStreak)) ?? 0;
 
     _isInitialized = true;
-  }
-
-  void _resetToDefaults() {
-    _totalPuzzles = 0;
-    _totalScore = 0;
-    _bestScore = 0;
-    _perfectMoves = 0;
-    _excellentMoves = 0;
-    _goodMoves = 0;
-    _okayMoves = 0;
-    _poorMoves = 0;
-    _currentStreak = 0;
-    _bestStreak = 0;
   }
 
   Future<void> recordPuzzle(int score) async {

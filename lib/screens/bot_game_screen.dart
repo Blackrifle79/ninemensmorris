@@ -362,7 +362,10 @@ class _BotGameScreenState extends State<BotGameScreen> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
-                                value: (_remainingSeconds / 20.0).clamp(0.0, 1.0),
+                                value: (_remainingSeconds / 20.0).clamp(
+                                  0.0,
+                                  1.0,
+                                ),
                                 minHeight: 8,
                                 backgroundColor: AppStyles.darkBrown.withValues(
                                   alpha: 0.2,
@@ -380,7 +383,6 @@ class _BotGameScreenState extends State<BotGameScreen> {
                     )
                   else
                     const SizedBox(height: 36), // Reserve space when AI's turn
-
                   // Piece counter with player names and ranks
                   PieceCounter(
                     gameModel: _gameModel,
@@ -878,7 +880,9 @@ class _BotGameScreenState extends State<BotGameScreen> {
     }
 
     // Use forfeit termination reason if applicable
-    final terminationReason = forfeit ? 'timeout' : _gameModel.terminationReason;
+    final terminationReason = forfeit
+        ? 'timeout'
+        : _gameModel.terminationReason;
 
     // Compute scores
     GameScore playerScore = _scoringService.computeScore(
@@ -1018,33 +1022,62 @@ class _BotGameScreenState extends State<BotGameScreen> {
       newRank = rankResult['rank'] as int?;
     } catch (_) {}
 
-    // Update bot's leaderboard entry
+    // Update bot's leaderboard entry with ELO rating change
     try {
       final botLb = await client
           .from('leaderboard')
-          .select('online_score, online_games, wins, losses, draws')
+          .select('avg_score, online_score, online_games, wins, losses, draws')
           .eq('id', widget.botId)
           .maybeSingle();
 
       if (botLb != null) {
-        final oldScore = (botLb['online_score'] as num?)?.toDouble() ?? 50.0;
+        final botOldRating = (botLb['avg_score'] as num?)?.toDouble() ?? 50.0;
         final oldGames = (botLb['online_games'] as int?) ?? 0;
         final oldWins = (botLb['wins'] as int?) ?? 0;
         final oldLosses = (botLb['losses'] as int?) ?? 0;
         final oldDraws = (botLb['draws'] as int?) ?? 0;
 
-        // Calculate new running average
+        // Calculate ELO rating change for the bot
         final botWon = winnerId == widget.botId;
-        final double botGameScore = botWon ? 70.0 : (isDraw ? 50.0 : 30.0);
-        final newScore = oldGames == 0
-            ? botGameScore
-            : (oldScore * oldGames + botGameScore) / (oldGames + 1);
+        String botOutcome;
+        if (isDraw) {
+          botOutcome = 'draw';
+        } else if (botWon) {
+          botOutcome = 'win';
+        } else {
+          botOutcome = 'loss';
+        }
+
+        // ELO calculation: expected score
+        final ratingDiff =
+            oldRating - botOldRating; // Human's old rating - bot's rating
+        final expectedScore = 1.0 / (1.0 + pow(10, ratingDiff / 25.0));
+
+        // Actual score for bot
+        double actualScore;
+        switch (botOutcome) {
+          case 'win':
+            actualScore = 1.0;
+            break;
+          case 'draw':
+            actualScore = 0.5;
+            break;
+          default:
+            actualScore = 0.0;
+        }
+
+        // ELO formula
+        const kFactor = 3.2; // Scaled K factor for 0-100 range
+        final ratingChange = kFactor * (actualScore - expectedScore);
+        final botNewRating = (botOldRating + ratingChange).clamp(0.0, 100.0);
 
         await client
             .from('leaderboard')
             .update({
-              'online_score': newScore,
+              'avg_score': botNewRating,
+              'score': botNewRating.round(), // legacy column
               'online_games': oldGames + 1,
+              'games_played': oldGames + 1,
               'wins': oldWins + (botWon ? 1 : 0),
               'losses': oldLosses + (!isDraw && !botWon ? 1 : 0),
               'draws': oldDraws + (isDraw ? 1 : 0),

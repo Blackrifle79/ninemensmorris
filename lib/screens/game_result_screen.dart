@@ -312,7 +312,11 @@ class GameResultScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, color: AppStyles.mediumBrown, size: 16),
+                  Icon(
+                    Icons.arrow_forward,
+                    color: AppStyles.mediumBrown,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     '#$newRank',
@@ -327,14 +331,16 @@ class GameResultScreen extends StatelessWidget {
                   if (oldRank != newRank) ...[
                     // Lower rank number = better, so negative change = improvement
                     Text(
-                      oldRank! > newRank! 
-                          ? '▲${oldRank! - newRank!}'  // Improved (went up)
+                      oldRank! > newRank!
+                          ? '▲${oldRank! - newRank!}' // Improved (went up)
                           : '▼${newRank! - oldRank!}', // Dropped (went down)
                       style: TextStyle(
                         fontFamily: AppStyles.fontBody,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: oldRank! > newRank! ? AppStyles.green : AppStyles.burgundy,
+                        color: oldRank! > newRank!
+                            ? AppStyles.green
+                            : AppStyles.burgundy,
                       ),
                     ),
                   ] else ...[

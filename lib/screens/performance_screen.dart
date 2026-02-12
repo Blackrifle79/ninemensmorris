@@ -116,6 +116,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
         elevation: 0,
         foregroundColor: AppStyles.cream,
         iconTheme: const IconThemeData(color: AppStyles.cream),
+        centerTitle: true,
         title: const Text('Performance', style: AppStyles.headingMediumLight),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -442,7 +443,8 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   Widget _buildTrainingStatsCard() {
     final rating = _statsService.getSkillRating();
     // Total moves = sum of all quality categories
-    final total = _statsService.perfectMoves +
+    final total =
+        _statsService.perfectMoves +
         _statsService.excellentMoves +
         _statsService.goodMoves +
         _statsService.okayMoves +

@@ -87,16 +87,113 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
 
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 340),
+          padding: const EdgeInsets.all(24),
+          decoration: AppStyles.dialogDecoration,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.mail_outline,
+                size: 48,
+                color: AppStyles.darkBrown,
+              ),
+              const SizedBox(height: 16),
+              const Text('Reset Password', style: AppStyles.headingMedium),
+              const SizedBox(height: 12),
+              Text(
+                'Send password reset link to:',
+                style: AppStyles.bodyText,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                email,
+                style: AppStyles.bodyTextBold,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    style: AppStyles.primaryButtonStyle,
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    style: AppStyles.primaryButtonStyle,
+                    child: const Text('Send Link'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     setState(() => _isLoading = true);
     final result = await _authService.resetPassword(email);
     setState(() => _isLoading = false);
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      result.isSuccess
-          ? AppStyles.successSnackBar(result.message)
-          : AppStyles.errorSnackBar(result.message),
+    // Show result dialog
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 340),
+          padding: const EdgeInsets.all(24),
+          decoration: AppStyles.dialogDecoration,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                result.isSuccess
+                    ? Icons.check_circle_outline
+                    : Icons.error_outline,
+                size: 48,
+                color: result.isSuccess ? Colors.green[700] : Colors.red[700],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                result.isSuccess ? 'Email Sent!' : 'Error',
+                style: AppStyles.headingMedium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                result.isSuccess
+                    ? 'Check your inbox for a password reset link. It may take a few minutes to arrive.'
+                    : result.message,
+                style: AppStyles.bodyText,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: AppStyles.primaryButtonStyle,
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -220,228 +317,271 @@ class _AuthScreenState extends State<AuthScreen> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                            // Username field (only for registration)
-                            if (!_isLogin) ...[
-                              SizedBox(
-                                width: 280,
-                                child: TextFormField(
-                                  controller: _usernameController,
-                                  style: const TextStyle(
-                                    color: AppStyles.darkBrown,
-                                    fontFamily: AppStyles.fontBody,
-                                    fontSize: 16,
-                                  ),
-                                  decoration: _inputDecoration(
-                                    label: 'Username (optional)',
-                                    icon: Icons.person,
-                                  ),
-                                  textInputAction: TextInputAction.next,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-
-                            // Email field
-                            SizedBox(
-                              width: 280,
-                              child: TextFormField(
-                                controller: _emailController,
-                                style: const TextStyle(
-                                  color: AppStyles.darkBrown,
-                                  fontFamily: AppStyles.fontBody,
-                                  fontSize: 16,
-                                ),
-                                decoration: _inputDecoration(
-                                  label: 'Email',
-                                  icon: Icons.email,
-                                ),
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.next,
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  if (!RegExp(
-                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                  ).hasMatch(value.trim())) {
-                                    return 'Please enter a valid email';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Password field
-                            SizedBox(
-                              width: 280,
-                              child: TextFormField(
-                                controller: _passwordController,
-                                style: const TextStyle(
-                                  color: AppStyles.darkBrown,
-                                  fontFamily: AppStyles.fontBody,
-                                  fontSize: 16,
-                                ),
-                                decoration: _inputDecoration(
-                                  label: 'Password',
-                                  icon: Icons.lock,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off
-                                          : Icons.visibility,
-                                      color: AppStyles.mediumBrown,
+                                  // Username field (only for registration)
+                                  if (!_isLogin) ...[
+                                    SizedBox(
+                                      width: 280,
+                                      child: TextFormField(
+                                        controller: _usernameController,
+                                        style: const TextStyle(
+                                          color: AppStyles.darkBrown,
+                                          fontFamily: AppStyles.fontBody,
+                                          fontSize: 16,
+                                        ),
+                                        decoration: _inputDecoration(
+                                          label: 'Username (optional)',
+                                          icon: Icons.person,
+                                        ),
+                                        textInputAction: TextInputAction.next,
+                                      ),
                                     ),
+                                    const SizedBox(height: 16),
+                                  ],
+
+                                  // Email field
+                                  SizedBox(
+                                    width: 280,
+                                    child: TextFormField(
+                                      controller: _emailController,
+                                      style: const TextStyle(
+                                        color: AppStyles.darkBrown,
+                                        fontFamily: AppStyles.fontBody,
+                                        fontSize: 16,
+                                      ),
+                                      decoration: _inputDecoration(
+                                        label: 'Email',
+                                        icon: Icons.email,
+                                      ),
+                                      keyboardType: TextInputType.emailAddress,
+                                      textInputAction: TextInputAction.next,
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return 'Please enter your email';
+                                        }
+                                        if (!RegExp(
+                                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                        ).hasMatch(value.trim())) {
+                                          return 'Please enter a valid email';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  // Password field
+                                  SizedBox(
+                                    width: 280,
+                                    child: TextFormField(
+                                      controller: _passwordController,
+                                      style: const TextStyle(
+                                        color: AppStyles.darkBrown,
+                                        fontFamily: AppStyles.fontBody,
+                                        fontSize: 16,
+                                      ),
+                                      decoration: _inputDecoration(
+                                        label: 'Password',
+                                        icon: Icons.lock,
+                                        suffixIcon: IconButton(
+                                          icon: Icon(
+                                            _obscurePassword
+                                                ? Icons.visibility_off
+                                                : Icons.visibility,
+                                            color: AppStyles.mediumBrown,
+                                          ),
+                                          onPressed: () {
+                                            setState(
+                                              () => _obscurePassword =
+                                                  !_obscurePassword,
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      obscureText: _obscurePassword,
+                                      textInputAction: TextInputAction.done,
+                                      onFieldSubmitted: (_) => _submit(),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter your password';
+                                        }
+                                        if (!_isLogin && value.length < 6) {
+                                          return 'Password must be at least 6 characters';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+
+                                  // Forgot password (only for login)
+                                  if (_isLogin) ...[
+                                    const SizedBox(height: 8),
+                                    TextButton(
+                                      onPressed: _isLoading
+                                          ? null
+                                          : _resetPassword,
+                                      child: const Text(
+                                        'Forgot Password?',
+                                        style: TextStyle(
+                                          color: AppStyles.darkBrown,
+                                          fontFamily: AppStyles.fontBody,
+                                          fontSize: 14,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: AppStyles.darkBrown,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+
+                                  const SizedBox(height: 24),
+
+                                  // Submit button
+                                  SizedBox(
+                                    width: 200,
+                                    child: ElevatedButton(
+                                      onPressed: _isLoading ? null : _submit,
+                                      style: AppStyles.primaryButtonStyle,
+                                      child: _isLoading
+                                          ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(AppStyles.cream),
+                                              ),
+                                            )
+                                          : Text(
+                                              _isLogin
+                                                  ? 'Sign In'
+                                                  : 'Create Account',
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+
+                                  // Google Sign-In button (only on supported platforms)
+                                  if (_isLogin &&
+                                      _authService.isGoogleSignInSupported) ...[
+                                    const Text(
+                                      'or',
+                                      style: TextStyle(
+                                        color: AppStyles.darkBrown,
+                                        fontFamily: AppStyles.fontBody,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    SizedBox(
+                                      width: 280,
+                                      height: 44,
+                                      child: OutlinedButton(
+                                        onPressed: _isLoading
+                                            ? null
+                                            : _signInWithGoogle,
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          foregroundColor: Colors.black87,
+                                          side: const BorderSide(
+                                            color: Colors.grey,
+                                            width: 1,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            // Google "G" logo colors
+                                            SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CustomPaint(
+                                                painter: _GoogleLogoPainter(),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            const Text(
+                                              'Sign in with Google',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+
+                                  // Toggle login/register
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        _isLogin
+                                            ? 'Don\'t have an account?'
+                                            : 'Already have an account?',
+                                        style: const TextStyle(
+                                          color: AppStyles.darkBrown,
+                                          fontFamily: AppStyles.fontBody,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: _isLoading
+                                            ? null
+                                            : () {
+                                                setState(() {
+                                                  _isLogin = !_isLogin;
+                                                  _formKey.currentState
+                                                      ?.reset();
+                                                });
+                                              },
+                                        child: Text(
+                                          _isLogin ? 'Sign Up' : 'Sign In',
+                                          style: const TextStyle(
+                                            color: AppStyles.darkBrown,
+                                            fontFamily: AppStyles.fontBody,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            decoration:
+                                                TextDecoration.underline,
+                                            decorationColor:
+                                                AppStyles.darkBrown,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  // Privacy Policy link
+                                  const SizedBox(height: 16),
+                                  TextButton(
                                     onPressed: () {
-                                      setState(
-                                        () => _obscurePassword =
-                                            !_obscurePassword,
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const PrivacyPolicyScreen(),
+                                        ),
                                       );
                                     },
-                                  ),
-                                ),
-                                obscureText: _obscurePassword,
-                                textInputAction: TextInputAction.done,
-                                onFieldSubmitted: (_) => _submit(),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
-                                  }
-                                  if (!_isLogin && value.length < 6) {
-                                    return 'Password must be at least 6 characters';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-
-                            // Forgot password (only for login)
-                            if (_isLogin) ...[
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: _isLoading ? null : _resetPassword,
-                                child: const Text(
-                                  'Forgot Password?',
-                                  style: TextStyle(
-                                    color: AppStyles.darkBrown,
-                                    fontFamily: AppStyles.fontBody,
-                                    fontSize: 14,
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: AppStyles.darkBrown,
-                                  ),
-                                ),
-                              ),
-                            ],
-
-                            const SizedBox(height: 24),
-
-                            // Submit button
-                            SizedBox(
-                              width: 200,
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _submit,
-                                style: AppStyles.primaryButtonStyle,
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                AppStyles.cream,
-                                              ),
-                                        ),
-                                      )
-                                    : Text(
-                                        _isLogin ? 'Sign In' : 'Create Account',
+                                    child: Text(
+                                      'Privacy Policy',
+                                      style: AppStyles.labelText.copyWith(
+                                        decoration: TextDecoration.underline,
+                                        decorationColor:
+                                            AppStyles.textSecondary,
                                       ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Google Sign-In button (only on supported platforms)
-                            if (_isLogin &&
-                                _authService.isGoogleSignInSupported) ...[
-                              const Text(
-                                'or',
-                                style: TextStyle(
-                                  color: AppStyles.darkBrown,
-                                  fontFamily: AppStyles.fontBody,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              SizedBox(
-                                width: 280,
-                                child: ElevatedButton.icon(
-                                  onPressed: _isLoading
-                                      ? null
-                                      : _signInWithGoogle,
-                                  icon: const Icon(Icons.g_mobiledata),
-                                  label: const Text('Sign in with Google'),
-                                  style: AppStyles.primaryButtonStyle,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-
-                            // Toggle login/register
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _isLogin
-                                      ? 'Don\'t have an account?'
-                                      : 'Already have an account?',
-                                  style: const TextStyle(
-                                    color: AppStyles.darkBrown,
-                                    fontFamily: AppStyles.fontBody,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: _isLoading
-                                      ? null
-                                      : () {
-                                          setState(() {
-                                            _isLogin = !_isLogin;
-                                            _formKey.currentState?.reset();
-                                          });
-                                        },
-                                  child: Text(
-                                    _isLogin ? 'Sign Up' : 'Sign In',
-                                    style: const TextStyle(
-                                      color: AppStyles.darkBrown,
-                                      fontFamily: AppStyles.fontBody,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      decoration: TextDecoration.underline,
-                                      decorationColor: AppStyles.darkBrown,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-
-                            // Privacy Policy link
-                            const SizedBox(height: 16),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const PrivacyPolicyScreen(),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Privacy Policy',
-                                style: AppStyles.labelText.copyWith(
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: AppStyles.textSecondary,
-                                ),
-                              ),
-                            ),
                                 ],
                               ),
                             ),
@@ -503,4 +643,77 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
     );
   }
+}
+
+/// Custom painter for Google "G" logo with official brand colors
+class _GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // Google brand colors
+    const blue = Color(0xFF4285F4);
+    const red = Color(0xFFEA4335);
+    const yellow = Color(0xFFFBBC05);
+    const green = Color(0xFF34A853);
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.18
+      ..strokeCap = StrokeCap.butt;
+
+    // Draw the colored arcs (G shape)
+    // Blue (right side)
+    paint.color = blue;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius * 0.7),
+      -0.4, // start angle
+      1.5, // sweep angle
+      false,
+      paint,
+    );
+
+    // Green (bottom)
+    paint.color = green;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius * 0.7),
+      1.1,
+      0.9,
+      false,
+      paint,
+    );
+
+    // Yellow (left-bottom)
+    paint.color = yellow;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius * 0.7),
+      2.0,
+      0.7,
+      false,
+      paint,
+    );
+
+    // Red (top)
+    paint.color = red;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius * 0.7),
+      2.7,
+      0.9,
+      false,
+      paint,
+    );
+
+    // Blue horizontal bar
+    paint.color = blue;
+    paint.strokeWidth = size.width * 0.16;
+    canvas.drawLine(
+      Offset(center.dx, center.dy),
+      Offset(size.width * 0.95, center.dy),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

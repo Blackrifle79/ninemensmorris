@@ -51,6 +51,7 @@ class _OptionsScreenState extends State<OptionsScreen> {
         elevation: 0,
         foregroundColor: AppStyles.cream,
         iconTheme: const IconThemeData(color: AppStyles.cream),
+        centerTitle: true,
         title: const Text('Options', style: AppStyles.headingMediumLight),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -229,12 +230,14 @@ class _OptionsScreenState extends State<OptionsScreen> {
                                     onTap: () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
-                                          builder: (_) => const PrivacyPolicyScreen(),
+                                          builder: (_) =>
+                                              const PrivacyPolicyScreen(),
                                         ),
                                       );
                                     },
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         const Text(
                                           'Privacy Policy',

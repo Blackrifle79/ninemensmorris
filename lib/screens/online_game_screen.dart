@@ -296,7 +296,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
       );
       _myOldRating = ratingResult['oldRating'];
       _myNewRating = ratingResult['newRating'];
-      
+
       // Get new ranking
       final rankResult = await LeaderboardService().getPlayerRanking(myId);
       _myNewRank = rankResult['rank'];
@@ -900,7 +900,7 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     );
     _myOldRating = ratingResult['oldRating'];
     _myNewRating = ratingResult['newRating'];
-    
+
     // Get new ranking
     final rankResult = await LeaderboardService().getPlayerRanking(myId);
     _myNewRank = rankResult['rank'];
@@ -1402,56 +1402,62 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
                     ),
                   ),
 
-                  // Turn timer with visible countdown
-                  if (_timerActive)
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.hourglass_bottom,
-                            size: 20,
-                            color: _remainingSeconds <= 5
-                                ? AppStyles.burgundy
-                                : AppStyles.mediumBrown,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${_remainingSeconds.ceil()}s',
-                            style: TextStyle(
-                              fontFamily: AppStyles.fontBody,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _remainingSeconds <= 5
-                                  ? AppStyles.burgundy
-                                  : AppStyles.darkBrown,
+                  // Turn timer with visible countdown - always reserve space
+                  SizedBox(
+                    height: 44,
+                    child: _timerActive
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 16,
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: (_remainingSeconds / 20.0).clamp(0.0, 1.0),
-                                minHeight: 8,
-                                backgroundColor: AppStyles.darkBrown.withValues(
-                                  alpha: 0.2,
-                                ),
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  _remainingSeconds <= 5
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.hourglass_bottom,
+                                  size: 20,
+                                  color: _remainingSeconds <= 5
                                       ? AppStyles.burgundy
-                                      : AppStyles.green,
+                                      : AppStyles.mediumBrown,
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_remainingSeconds.ceil()}s',
+                                  style: TextStyle(
+                                    fontFamily: AppStyles.fontBody,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: _remainingSeconds <= 5
+                                        ? AppStyles.burgundy
+                                        : AppStyles.darkBrown,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: (_remainingSeconds / 20.0).clamp(
+                                        0.0,
+                                        1.0,
+                                      ),
+                                      minHeight: 8,
+                                      backgroundColor: AppStyles.darkBrown
+                                          .withValues(alpha: 0.2),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        _remainingSeconds <= 5
+                                            ? AppStyles.burgundy
+                                            : AppStyles.green,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    const SizedBox(height: 36), // Reserve space when not my turn
-
+                          )
+                        : null,
+                  ),
                   // Bottom bar with player names and piece info
                   PieceCounter(
                     gameModel: _gameModel,

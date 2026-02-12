@@ -502,7 +502,44 @@ class GameRoomService {
       }
     }
 
-    // ─── No humans available — check for bots ─────────────────────────
+    // ─── No humans available — create waiting room and wait briefly ───
+    // Give other humans a chance to find us before falling back to bots
+    final waitingRoom = await createRoom();
+    if (waitingRoom != null) {
+      // Wait up to 12 seconds for a human to join, polling every 2 seconds
+      for (int i = 0; i < 6; i++) {
+        await Future.delayed(const Duration(seconds: 2));
+
+        // Check if someone joined our room
+        try {
+          final roomData = await _client
+              .from('game_rooms')
+              .select('*')
+              .eq('id', waitingRoom.id)
+              .maybeSingle();
+
+          if (roomData != null) {
+            final room = GameRoom.fromJson(roomData);
+            if (room.guestId != null && room.status == 'playing') {
+              // A human joined!
+              return QuickMatchResult.matched(room);
+            }
+          } else {
+            // Room was deleted (maybe by another process)
+            break;
+          }
+        } catch (_) {
+          break;
+        }
+      }
+
+      // No human joined - clean up waiting room before bot fallback
+      try {
+        await _client.from('game_rooms').delete().eq('id', waitingRoom.id);
+      } catch (_) {}
+    }
+
+    // ─── Fall back to bots ────────────────────────────────────────────
     // Bots run locally as AI opponents but still update the online leaderboard
     try {
       final botsData = await _client
@@ -589,16 +626,13 @@ class GameRoomService {
         }
       }
     } catch (_) {
-      // Bot matching failed — fall through to create waiting room
+      // Bot matching failed
     }
 
-    // No suitable opponent available — create a room and wait for a human
-    final newRoom = await createRoom();
-    if (newRoom != null) {
-      return QuickMatchResult.waiting(newRoom);
-    }
-
-    return QuickMatchResult.failure('Failed to create matchmaking room');
+    // No opponent found (no humans joined, no bots available)
+    return QuickMatchResult.failure(
+      'No opponents available. Please try again.',
+    );
   }
 }
 

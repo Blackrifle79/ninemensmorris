@@ -14,7 +14,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
         elevation: 0,
         foregroundColor: AppStyles.cream,
         iconTheme: const IconThemeData(color: AppStyles.cream),
-        title: const Text('Privacy Policy', style: AppStyles.headingMediumLight),
+        centerTitle: true,
+        title: const Text(
+          'Privacy Policy',
+          style: AppStyles.headingMediumLight,
+        ),
       ),
       body: Stack(
         children: [
@@ -105,15 +109,12 @@ These services have their own privacy policies governing the use of your informa
                         'Children\'s Privacy',
                         'Our app does not knowingly collect personal information from children under 13.',
                       ),
-                      _buildSection(
-                        'Your Rights',
-                        '''You have the right to:
+                      _buildSection('Your Rights', '''You have the right to:
 • Access your personal data
 • Request deletion of your account and data
 • Update your account information
 
-To exercise these rights, use the account management features in the app.''',
-                      ),
+To exercise these rights, use the account management features in the app.'''),
                       _buildSection(
                         'Changes to This Policy',
                         'We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy in the app. You are advised to review this Privacy Policy periodically for any changes.',
@@ -143,15 +144,9 @@ To exercise these rights, use the account management features in the app.''',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AppStyles.bodyTextBold.copyWith(fontSize: 16),
-          ),
+          Text(title, style: AppStyles.bodyTextBold.copyWith(fontSize: 16)),
           const SizedBox(height: 8),
-          Text(
-            content,
-            style: AppStyles.bodyText.copyWith(height: 1.5),
-          ),
+          Text(content, style: AppStyles.bodyText.copyWith(height: 1.5)),
         ],
       ),
     );

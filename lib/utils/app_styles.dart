@@ -107,8 +107,8 @@ class AppStyles {
   static const TextStyle headingMediumLight = TextStyle(
     fontFamily: fontHeadline,
     color: cream,
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
+    fontSize: 26,
+    fontWeight: FontWeight.w900,
   );
 
   static const TextStyle bodyTextLight = TextStyle(

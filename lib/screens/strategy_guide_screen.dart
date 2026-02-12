@@ -17,6 +17,7 @@ class StrategyGuideScreen extends StatelessWidget {
         elevation: 0,
         foregroundColor: AppStyles.cream,
         iconTheme: const IconThemeData(color: AppStyles.cream),
+        centerTitle: true,
         title: const Text(
           'Strategy Guide',
           style: AppStyles.headingMediumLight,
