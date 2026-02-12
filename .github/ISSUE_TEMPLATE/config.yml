@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📧 Email Support
+    url: mailto:dan.zarwell@gmail.com
+    about: Contact us directly for urgent issues or if you prefer email
+  - name: 🎮 Game Feedback
+    url: https://github.com/Blackrifle79/ninemensmorris/discussions
+    about: Share general feedback or suggestions about the game
+  - name: 📖 Privacy Policy
+    url: https://github.com/Blackrifle79/ninemensmorris/blob/main/privacy.html
+    about: Read our privacy policy and data handling practices

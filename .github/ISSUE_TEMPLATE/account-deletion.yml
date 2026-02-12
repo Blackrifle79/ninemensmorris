@@ -1,0 +1,60 @@
+name: Account Deletion Request
+description: Request deletion of your Nine Men's Morris account and associated data
+title: "[ACCOUNT DELETION] Request for account: "
+labels: ["account-deletion", "privacy"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Account Deletion Request
+        
+        We will process your account deletion request within 30 days. All associated data including your profile, game statistics, and leaderboard entries will be permanently removed.
+        
+        **Note:** This action cannot be undone.
+
+  - type: input
+    id: email
+    attributes:
+      label: Account Email Address
+      description: The email address associated with your Nine Men's Morris account
+      placeholder: your-email@example.com
+    validations:
+      required: true
+
+  - type: input
+    id: username
+    attributes:
+      label: Username (if known)
+      description: Your display name in the game (optional, helps us locate your account faster)
+      placeholder: YourGameUsername
+
+  - type: dropdown
+    id: reason
+    attributes:
+      label: Reason for deletion (optional)
+      description: Help us improve our service
+      options:
+        - No longer use the app
+        - Privacy concerns
+        - Account security concerns
+        - Switching to a different account
+        - Other
+        - Prefer not to say
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      description: Please confirm your deletion request
+      options:
+        - label: I understand that this will permanently delete my account and all associated data
+          required: true
+        - label: I understand that this action cannot be undone
+          required: true
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information (optional)
+      description: Any additional details or concerns
+      placeholder: Any other information you'd like to provide...
