@@ -133,7 +133,7 @@
         
         <div id="message" class="message"></div>
         
-        <form id="resetForm">
+        <form id="resetForm" onsubmit="return false;">
             <div class="form-group">
                 <label for="password">New Password</label>
                 <input type="password" id="password" name="password" required minlength="6">
@@ -153,9 +153,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://kwvebnylvfykkxsczdrs.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_secret_gHEb5aAIIZjGvI64ACAKyQ_WzB3MRAv';
+        const SUPABASE_ANON_KEY = 'sb_publishable_ZGuIgwUahCTynbVXwksdlA_IjBOx0jQ';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         const form = document.getElementById('resetForm');
         const messageDiv = document.getElementById('message');
@@ -173,7 +173,7 @@
         
         // Listen for Supabase auth events — this handles both
         // PKCE flow (?code=xxx) and implicit flow (#access_token=xxx)
-        supabase.auth.onAuthStateChange(async (event, session) => {
+        sbClient.auth.onAuthStateChange(async (event, session) => {
             console.log('Auth event:', event);
             if (event === 'PASSWORD_RECOVERY') {
                 recoveryReady = true;
@@ -186,30 +186,37 @@
             }
         });
         
-        // Also try manual token exchange for PKCE flow (code in query string)
         async function init() {
             const params = new URLSearchParams(window.location.search);
-            const code = params.get('code');
+            const tokenHash = params.get('token_hash');
+            const type = params.get('type');
             
-            if (code) {
-                // PKCE flow: exchange the code for a session
-                const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (tokenHash && type === 'recovery') {
+                // Verify the token directly with Supabase
+                const { error } = await sbClient.auth.verifyOtp({
+                    token_hash: tokenHash,
+                    type: 'recovery'
+                });
                 if (error) {
+                    console.error('verifyOtp error:', error);
                     showMessage('Invalid or expired reset link. Please request a new one.', true);
                     submitBtn.disabled = true;
                     return;
                 }
-                // onAuthStateChange should fire PASSWORD_RECOVERY after this
+                // onAuthStateChange should fire, but set ready just in case
+                recoveryReady = true;
+                submitBtn.disabled = false;
+                showMessage('Enter your new password below.', false);
                 return;
             }
             
             // Fallback: check for hash fragment (implicit flow)
             const hashParams = new URLSearchParams(window.location.hash.substring(1));
             const accessToken = hashParams.get('access_token');
-            const type = hashParams.get('type');
+            const hashType = hashParams.get('type');
             
-            if (type === 'recovery' && accessToken) {
-                const { error } = await supabase.auth.setSession({
+            if (hashType === 'recovery' && accessToken) {
+                const { error } = await sbClient.auth.setSession({
                     access_token: accessToken,
                     refresh_token: hashParams.get('refresh_token') || ''
                 });
@@ -257,7 +264,7 @@
             submitBtn.textContent = 'Updating...';
             
             try {
-                const { error } = await supabase.auth.updateUser({ password });
+                const { error } = await sbClient.auth.updateUser({ password });
                 
                 if (error) {
                     showMessage('Error: ' + error.message, true);

@@ -132,7 +132,10 @@ class AuthService {
   /// Reset password
   Future<AuthResult> resetPassword(String email) async {
     try {
-      await _client.auth.resetPasswordForEmail(email);
+      await _client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'https://blackrifle79.github.io/ninemensmorris/',
+      );
       return AuthResult.success(
         message: 'Password reset email sent! Check your inbox.',
       );

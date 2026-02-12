@@ -4,7 +4,7 @@ class SupabaseConfig {
   static const String supabaseUrl = 'https://kwvebnylvfykkxsczdrs.supabase.co';
 
   static const String supabaseAnonKey =
-      'sb_secret_gHEb5aAIIZjGvI64ACAKyQ_WzB3MRAv';
+      'sb_publishable_ZGuIgwUahCTynbVXwksdlA_IjBOx0jQ';
 
   /// Google OAuth Web Client ID from Google Cloud Console
   /// Required for Google Sign-In to work with Supabase
