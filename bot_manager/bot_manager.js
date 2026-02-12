@@ -13,7 +13,7 @@ const supabase = createClient(
 const TARGET_ONLINE_BOTS = 15;  // How many bots should be "online" at once
 const MIN_ONLINE_BOTS = 15;
 const MAX_ONLINE_BOTS = 15;
-const MAX_CHURN_PER_TICK = 3;   // Don't change more than this many bots per tick
+const MAX_CHURN_PER_TICK = 1;   // Don't change more than this many bots per tick
 
 // Simulation config
 const SIMULATION_CHANCE = 0.25; // 25% chance per tick to run a simulated game
@@ -370,11 +370,11 @@ async function updateBotLeaderboard(winnerId, loserId, isDraw, bot1Id, bot2Id) {
 }
 
 // ─── Schedule ───────────────────────────────────────────────────────────────
-// Bot online/offline management: run every 60 seconds
-cron.schedule('* * * * *', tick);
+// Bot online/offline management: run every 5 minutes
+cron.schedule('*/5 * * * *', tick);
 
-// Simulated games: run every 30 seconds (25% chance each time)
-setInterval(runSimulations, 30000);
+// Simulated games: run every 5 minutes (25% chance each time)
+setInterval(runSimulations, 300000);
 
 // Run once at startup
 log('Bot manager starting (simulation mode)...');
