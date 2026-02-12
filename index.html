@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password - Nine Men's Morris</title>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            background-color: #2C1810;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: #F5F0E6;
+            padding: 50px 40px;
+            border-radius: 8px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 32px;
+            color: #2C1810;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #5C3D2E;
+            font-size: 18px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            color: #2C1810;
+            font-weight: 700;
+        }
+        
+        input[type="password"] {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 18px;
+            font-family: inherit;
+            border: 2px solid #8B5A2B;
+            border-radius: 4px;
+            background: #FFFFFF;
+            color: #2C1810;
+        }
+        
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #722F37;
+        }
+        
+        button {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-family: inherit;
+            font-weight: 700;
+            background: #722F37;
+            color: #F5F0E6;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #5a252c;
+        }
+        
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            text-align: center;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            font-size: 16px;
+            display: none;
+        }
+        
+        .message.error {
+            background: #722F37;
+            color: #F5F0E6;
+            display: block;
+        }
+        
+        .message.success {
+            background: #3D5A3D;
+            color: #F5F0E6;
+            display: block;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #8B5A2B;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Nine Men's Morris</h1>
+        <p class="subtitle">Reset Your Password</p>
+        
+        <div id="message" class="message"></div>
+        
+        <form id="resetForm" onsubmit="return false;">
+            <div class="form-group">
+                <label for="password">New Password</label>
+                <input type="password" id="password" name="password" required minlength="6">
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6">
+            </div>
+            
+            <button type="submit" id="submitBtn">Update Password</button>
+        </form>
+        
+        <p class="footer">Close this page after resetting your password.</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://kwvebnylvfykkxsczdrs.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_ZGuIgwUahCTynbVXwksdlA_IjBOx0jQ';
+        
+        const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const form = document.getElementById('resetForm');
+        const messageDiv = document.getElementById('message');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        let recoveryReady = false;
+        
+        function showMessage(text, isError = false) {
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + (isError ? 'error' : 'success');
+        }
+        
+        function setReady() {
+            recoveryReady = true;
+            submitBtn.disabled = false;
+            showMessage('Enter your new password below.', false);
+        }
+        
+        function setError(msg) {
+            showMessage(msg || 'Invalid or expired reset link. Please request a new one.', true);
+            submitBtn.disabled = true;
+        }
+        
+        // Start disabled
+        submitBtn.disabled = true;
+        showMessage('Verifying reset link...', false);
+        
+        // Listen for auth state changes — Supabase fires these when it
+        // picks up tokens from the URL hash automatically
+        sbClient.auth.onAuthStateChange((event, session) => {
+            console.log('Auth event:', event, session ? 'has session' : 'no session');
+            if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && !recoveryReady)) {
+                setReady();
+            }
+        });
+        
+        // Try all possible token formats
+        async function init() {
+            const url = new URL(window.location.href);
+            
+            // Method 1: PKCE flow — ?token_hash=xxx&type=recovery
+            const tokenHash = url.searchParams.get('token_hash');
+            const type = url.searchParams.get('type');
+            if (tokenHash && type === 'recovery') {
+                console.log('Found token_hash, verifying...');
+                const { error } = await sbClient.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+                if (error) {
+                    console.error('verifyOtp error:', error);
+                    setError();
+                } else {
+                    setReady();
+                }
+                return;
+            }
+            
+            // Method 2: Implicit flow — #access_token=xxx&type=recovery
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                const hashParams = new URLSearchParams(hash);
+                const accessToken = hashParams.get('access_token');
+                const refreshToken = hashParams.get('refresh_token');
+                const hashType = hashParams.get('type');
+                
+                if (accessToken && hashType === 'recovery') {
+                    console.log('Found access_token in hash, setting session...');
+                    const { error } = await sbClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken || '',
+                    });
+                    if (error) {
+                        console.error('setSession error:', error);
+                        setError();
+                    } else {
+                        setReady();
+                    }
+                    return;
+                }
+                
+                // Sometimes Supabase puts tokens in hash without type
+                if (accessToken) {
+                    console.log('Found access_token without type, trying anyway...');
+                    const { error } = await sbClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken || '',
+                    });
+                    if (!error) {
+                        setReady();
+                        return;
+                    }
+                }
+            }
+            
+            // Method 3: ?code=xxx (PKCE authorization code)
+            const code = url.searchParams.get('code');
+            if (code) {
+                console.log('Found auth code, exchanging...');
+                const { error } = await sbClient.auth.exchangeCodeForSession(code);
+                if (error) {
+                    console.error('exchangeCode error:', error);
+                    setError();
+                } else {
+                    setReady();
+                }
+                return;
+            }
+            
+            // No token found — wait 5s for onAuthStateChange (Supabase auto-detects hash)
+            console.log('No tokens found in URL, waiting for auth state change...');
+            setTimeout(() => {
+                if (!recoveryReady) {
+                    setError();
+                }
+            }, 5000);
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!recoveryReady) {
+                showMessage('Session not ready. Please wait or request a new reset link.', true);
+                return;
+            }
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match.', true);
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage('Password must be at least 6 characters.', true);
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Updating...';
+            
+            try {
+                const { error } = await sbClient.auth.updateUser({ password });
+                
+                if (error) {
+                    showMessage('Error: ' + error.message, true);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Update Password';
+                } else {
+                    showMessage('Password updated! You can now sign in with your new password.');
+                    form.style.display = 'none';
+                }
+            } catch (err) {
+                showMessage('Error: ' + err.message, true);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Update Password';
+            }
+        });
+        
+        init();
+    </script>
+</body>
+</html>
